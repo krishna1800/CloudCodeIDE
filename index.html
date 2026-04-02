@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CloudCode IDE</title>
+
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://unpkg.com/lucide@latest"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.44.0/min/vs/loader.min.js"></script>
+
+<style>
+body { background:#0d1117; color:white; height:100vh; display:flex; flex-direction:column; }
+#editor-container { flex:1; }
+.text-red { color:#f87171; }
+</style>
+</head>
+
+<body>
+
+<nav class="p-3 bg-[#161b22] flex justify-between">
+<h1>CloudCode IDE</h1>
+
+<select id="language">
+<option value="python">Python</option>
+<option value="javascript">JavaScript</option>
+<option value="cpp">C++</option>
+<option value="java">Java</option>
+</select>
+
+<button id="run">Run</button>
+</nav>
+
+<div style="display:flex; flex:1;">
+<div id="editor-container"></div>
+<pre id="output" style="width:30%; padding:10px;">Output...</pre>
+</div>
+
+<script>
+lucide.createIcons();
+
+let editor;
+
+// 👉 DEPLOY KE BAAD YAHAN URL CHANGE KARNA
+const BACKEND_URL = "http://127.0.0.1:5000/run";
+
+require.config({
+ paths: { vs: 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.44.0/min/vs'}
+});
+
+require(['vs/editor/editor.main'], function () {
+ editor = monaco.editor.create(document.getElementById('editor-container'), {
+   value: "print('Hello World')",
+   language: 'python',
+   theme: 'vs-dark',
+   automaticLayout: true
+ });
+});
+
+document.getElementById("run").onclick = async () => {
+ const code = editor.getValue();
+ const language = document.getElementById("language").value;
+
+ const output = document.getElementById("output");
+ output.innerText = "Running...";
+
+ try {
+   const res = await fetch(BACKEND_URL, {
+     method: "POST",
+     headers: { "Content-Type": "application/json" },
+     body: JSON.stringify({ code, language })
+   });
+
+   const data = await res.json();
+
+   output.innerText = data.output;
+
+   if(data.output.toLowerCase().includes("error")){
+       output.classList.add("text-red");
+   }
+
+ } catch {
+   output.innerText = "Backend not connected";
+ }
+};
+</script>
+
+</body>
+</html>
